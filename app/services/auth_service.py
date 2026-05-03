@@ -17,7 +17,7 @@ class AuthService:
         # verifica se email já existe
         existing_user = self.user_repo.find_by_email(email)
         if existing_user:
-            return {"error": "Usuário com e-mail já cadastrado"}
+            raise HTTPException(status_code=400, detail="Usuário com e-mail já cadastrado")
         
         # estudante já cadastrado
         if user.role == "student":
