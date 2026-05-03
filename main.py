@@ -5,3 +5,7 @@ app = FastAPI()
 
 # rota de autenticação
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
+
+@app.get("/")
+def home():
+    return {"message": "API rodando"}
