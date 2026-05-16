@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.controllers.auth_controller import router as auth_router
+from app.controllers.feed_controller import router as feed_router
+from app.controllers.post_controller import router as post_router
 
 app = FastAPI(
     title="Ruralize API",
@@ -23,6 +25,8 @@ app.add_middleware(
 )
 
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
+app.include_router(feed_router, prefix="/feed", tags=["Feed"])
+app.include_router(post_router, prefix="/posts", tags=["Posts"])
 
 @app.get("/")
 def home():

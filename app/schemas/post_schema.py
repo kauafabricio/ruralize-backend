@@ -9,6 +9,17 @@ class PostCreate(BaseModel):
     event_id: Optional[str] = None
     image_url: Optional[str] = None
 
+class PostUpdate(BaseModel):
+    content: Optional[str] = None
+    location: Optional[str] = None
+    sustainable_action: Optional[str] = None
+    event_id: Optional[str] = None
+    image_url: Optional[str] = None
+
+class CommentCreate(BaseModel):
+    user_id: str
+    content: str
+
 class Comment(BaseModel):
     user_id: str
     content: str
@@ -23,5 +34,6 @@ class PostResponse(BaseModel):
     event_id: Optional[str]
     image_url: Optional[str]
     likes: int
+    liked_by: List[str]
     comments: List[Comment]
     created_at: datetime
