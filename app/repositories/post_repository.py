@@ -114,3 +114,41 @@ class PostRepository:
             {"_id": obj_id},
             {"$push": {"comments": comment_obj}}
         )
+
+    def delete_post(self, post_id: str):
+        """Deleta um post pelo ID."""
+        try:
+            obj_id = ObjectId(post_id)
+        except Exception:
+            obj_id = post_id
+
+        return self.collection.delete_one({"_id": obj_id})
+
+    def remove_like(self, post_id: str, user_id: str):
+        """Remove uma curtida (like) de um post."""
+        try:
+            obj_id = ObjectId(post_id)
+        except Exception:
+            obj_id = post_id
+
+        return self.collection.update_one(
+            {"_id": obj_id, "liked_by": user_id},
+            {"$inc": {"likes": -1}, "$pull": {"liked_by": user_id}}
+        )
+
+    def remove_comment(self, post_id: str, comment_index: int):
+        """Remove um comentário específico pelo índice."""
+        try:
+            obj_id = ObjectId(post_id)
+        except Exception:
+            obj_id = post_id
+
+        post = self.collection.find_one({"_id": obj_id})
+        if post and 0 <= comment_index < len(post.get("comments", [])):
+            comments = post["comments"]
+            comments.pop(comment_index)
+            return self.collection.update_one(
+                {"_id": obj_id},
+                {"$set": {"comments": comments}}
+            )
+        return None

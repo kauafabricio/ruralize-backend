@@ -17,7 +17,7 @@ class UserRepository:
         return self.collection.find_one({"email": email})
 
     # busca usuário por matrícula
-    def find_by_registration(self, registration: int):
+    def find_by_registration(self, registration: str):
         return self.collection.find_one({"registration": registration})
 
     # cria usuário

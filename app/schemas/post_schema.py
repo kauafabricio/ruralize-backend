@@ -25,6 +25,18 @@ class Comment(BaseModel):
     content: str
     created_at: datetime
 
+class CommentWithUser(BaseModel):
+    user_id: str
+    user_name: str
+    user_photo: Optional[str] = None
+    content: str
+    created_at: datetime
+
+class UserLike(BaseModel):
+    user_id: str
+    user_name: str
+    user_photo: Optional[str] = None
+
 class PostResponse(BaseModel):
     id: str
     user_id: str
@@ -36,4 +48,17 @@ class PostResponse(BaseModel):
     likes: int
     liked_by: List[str]
     comments: List[Comment]
+    created_at: datetime
+
+class PostEnrichedResponse(BaseModel):
+    id: str
+    user_id: str
+    content: str
+    location: Optional[str]
+    sustainable_action: str
+    event_id: Optional[str]
+    image_url: Optional[str]
+    likes: int
+    liked_by: List[UserLike]
+    comments: List[CommentWithUser]
     created_at: datetime

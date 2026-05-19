@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from app.schemas.user_schema import UserCreate, UserLogin
 from app.services.auth_service import AuthService
 from app.repositories.user_repository import UserRepository
+from app.repositories.profile_repository import ProfileRepository
 from app.database import db
 
 router = APIRouter()
@@ -11,8 +12,10 @@ router = APIRouter()
 # db = representa banco de dados
 # UserRepository representa manipulação da coleção "users" do banco de dados
 user_repo = UserRepository(db)
+# ProfileRepository representa manipulação da coleção "profiles" do banco de dados
+profile_repo = ProfileRepository(db)
 # AuthService representa a regra de negócio para autenticação
-auth_service = AuthService(user_repo)
+auth_service = AuthService(user_repo, profile_repo)
 
 # rota de cadastro
 @router.post("/register")
