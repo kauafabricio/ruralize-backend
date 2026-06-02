@@ -135,19 +135,3 @@ def get_all_profiles():
         )
         for p in profiles
     ]
-
-
-@router.get("/{profile_id}", response_model=UserProfileResponse)
-def get_profile(profile_id: str):
-    """Retorna informações públicas de um perfil."""
-    profile = profile_service.get_profile_by_id(profile_id)
-    return UserProfileResponse(
-        id=profile["id"],
-        name=profile["name"],
-        role=profile["role"],
-        course=profile.get("course"),
-        department=profile.get("department"),
-        profile_photo_url=profile.get("profile_photo_url"),
-        description=profile.get("description"),
-        tags=profile.get("tags", [])
-    )

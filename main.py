@@ -4,6 +4,9 @@ from app.controllers.auth_controller import router as auth_router
 from app.controllers.feed_controller import router as feed_router
 from app.controllers.post_controller import router as post_router
 from app.controllers.profile_controller import router as profile_router
+from app.controllers.action_controller import router as action_router
+from app.controllers.event_controller import router as event_router
+from app.controllers.subscription_controller import router as subscription_router
 
 app = FastAPI(
     title="Ruralize API",
@@ -15,6 +18,7 @@ origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://ruralize-ufrpe.vercel.app",
+    "https://ruralize-bnamd1cew-kauas-projects-24d9238d.vercel.app"
 ]
 
 app.add_middleware(
@@ -29,6 +33,9 @@ app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(feed_router, prefix="/feed", tags=["Feed"])
 app.include_router(post_router, prefix="/posts", tags=["Posts"])
 app.include_router(profile_router, prefix="/profiles", tags=["Profiles"])
+app.include_router(action_router, prefix="/actions", tags=["Actions"])
+app.include_router(event_router, prefix="/events", tags=["Events"])
+app.include_router(subscription_router, prefix="/events", tags=["Subscriptions"])
 
 @app.get("/")
 def home():

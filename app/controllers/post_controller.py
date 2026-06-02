@@ -13,6 +13,8 @@ post_repo = PostRepository(db)
 profile_repo = ProfileRepository(db)
 post_service = PostService(post_repo, profile_repo)
 
+# GET
+
 @router.get("/", response_model=List[PostResponse])
 def get_posts():
     """Retorna todas as postagens."""
@@ -22,6 +24,8 @@ def get_posts():
 def get_post(post_id: str):
     """Retorna uma única postagem por id."""
     return post_service.get_post(post_id)
+
+# CREATE AND UPDATE
 
 @router.post("/", response_model=dict)
 def create_post(post: PostCreate, user_id: str):
@@ -33,6 +37,8 @@ def update_post(post_id: str, post: PostUpdate):
     """Atualiza campos de uma postagem existente."""
     return post_service.update_post(post_id, post)
 
+# LIKE AND COMMENT
+
 @router.post("/{post_id}/like", response_model=dict)
 def like_post(post_id: str, user_id: str):
     """Registra um like e salva o id do usuário que curtiu."""
@@ -43,6 +49,8 @@ def add_comment(post_id: str, comment: CommentCreate):
     """Adiciona um comentário à postagem com user_id e conteúdo."""
     return post_service.add_comment(post_id, comment)
 
+
+# DELETE
 
 @router.delete("/{post_id}", response_model=dict)
 def delete_post(post_id: str, user_id: str):

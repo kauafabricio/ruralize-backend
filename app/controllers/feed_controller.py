@@ -15,6 +15,9 @@ feed_service = FeedService(post_repo, user_repo)
 def get_general_feed(user_id: str = None):
     return feed_service.get_general_feed(user_id)
 
+
+# CONSIDERAR EM TIRAR ESSE GET
+
 @router.get("/friends/{user_id}")
 def get_friends_feed(user_id: str):
     return feed_service.get_friends_feed(user_id)
