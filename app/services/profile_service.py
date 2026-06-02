@@ -14,12 +14,6 @@ class ProfileService:
             raise HTTPException(status_code=404, detail="Perfil não encontrado")
         return profile
 
-    def get_profile_by_id(self, profile_id: str):
-        profile = self.profile_repo.find_by_id(profile_id)
-        if not profile:
-            raise HTTPException(status_code=404, detail="Perfil não encontrado")
-        return profile
-
     def get_all_profiles(self):
         return self.profile_repo.get_all_profiles()
 

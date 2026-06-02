@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 from typing import Optional, List
-from datetime import datetime
 
 
 class ProfileCreate(BaseModel):
@@ -25,7 +24,6 @@ class ProfileAcademicInfo(BaseModel):
 
 class ProfileResponse(BaseModel):
     id: str
-    user_id: str
     name: str
     role: str
     course: Optional[str] = None
@@ -35,8 +33,6 @@ class ProfileResponse(BaseModel):
     cover_photo_url: Optional[str] = None
     tags: Optional[List[str]] = []
     academic_info: Optional[ProfileAcademicInfo] = None
-    created_at: datetime
-    updated_at: datetime
 
 
 class UserProfileResponse(BaseModel):
