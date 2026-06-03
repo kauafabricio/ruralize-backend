@@ -33,6 +33,7 @@ class EventRepository:
         event_data["created_at"] = datetime.utcnow()
         event_data["updated_at"] = datetime.utcnow()
         event_data["participant_count"] = 0
+        event_data["participants"] = []
 
         result = self.collection.insert_one(event_data)
         return str(result.inserted_id)
@@ -118,3 +119,43 @@ class EventRepository:
             {"_id": obj_id},
             {"$inc": {"participant_count": -1}}
         )
+
+    def register_user(self, event_id, user_id):
+    try:
+        obj_id = ObjectId(event_id)
+    except Exception:
+        obj_id = event_id
+
+    return self.collection.update_one(
+        {
+            "_id": obj_id,
+            "participants": {"$ne": user_id}
+        },
+        {
+            "$push": {"participants": user_id},
+            "$inc": {"participant_count": 1}
+        }
+    )
+
+
+    def unregister_user(self, event_id, user_id):
+    try:
+        obj_id = ObjectId(event_id)
+    except Exception:
+        obj_id = event_id
+
+    return self.collection.update_one(
+        {"_id": obj_id},
+        {
+            "$pull": {"participants": user_id},
+            "$inc": {"participant_count": -1}
+        }
+    )
+
+
+    def get_events_by_participant(self, user_id):
+    events = self.collection.find({
+        "participants": user_id
+    })
+
+    return [self._serialize(e) for e in events]
