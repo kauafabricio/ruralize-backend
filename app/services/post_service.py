@@ -47,6 +47,11 @@ class PostService:
         posts = self.post_repo.get_all_posts()
         return [self._enrich_post(p) for p in posts]
 
+    def get_posts_by_user(self, user_id: str):
+        # retorna todas as postagens de um usuário específico
+        posts = self.post_repo.get_posts_by_user_id(user_id)
+        return [self._enrich_post(p) for p in posts]
+
     def get_post(self, post_id: str):
         # retorna uma postagem específica por id
         post = self.post_repo.get_post_by_id(post_id)

@@ -47,6 +47,12 @@ class PostRepository:
         })
         return [self._serialize(p) for p in posts]
 
+    def get_posts_by_user_id(self, user_id):
+        posts = self.collection.find({
+            "user_id": user_id
+        }).sort("created_at", -1)
+        return [self._serialize(p) for p in posts]
+
     def get_post_by_id(self, post_id):
         try:
             obj_id = ObjectId(post_id)

@@ -18,7 +18,8 @@ origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://ruralize-ufrpe.vercel.app",
-    "https://ruralize-bnamd1cew-kauas-projects-24d9238d.vercel.app"
+    "https://ruralize-bnamd1cew-kauas-projects-24d9238d.vercel.app",
+    "https://ruralize-git-dev-kauas-projects-24d9238d.vercel.app"
 ]
 
 app.add_middleware(
