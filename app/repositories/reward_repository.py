@@ -29,9 +29,16 @@ class RewardRepository:
         return {
             "id": str(redemption["_id"]),
             "user_id": redemption["user_id"],
+            "user_email": redemption["user_email"],
+            "user_name": redemption["user_name"],
             "reward_id": redemption["reward_id"],
             "reward_name": redemption["reward_name"],
             "points_deducted": redemption["points_deducted"],
+            "redemption_code": redemption["redemption_code"],
+            "pickup_deadline": redemption["pickup_deadline"],
+            "status": redemption.get("status", "pending"),
+            "email_sent_at": redemption.get("email_sent_at"),
+            "collected_at": redemption.get("collected_at"),
             "redeemed_at": redemption["redeemed_at"]
         }
 
@@ -123,3 +130,43 @@ class RewardRepository:
             "user_id": user_id,
             "reward_id": reward_id
         })
+
+    def get_redemption_by_code(self, redemption_code: str):
+        """Get a redemption by its unique code"""
+        redemption = self.redemptions_collection.find_one({
+            "redemption_code": redemption_code
+        })
+        return self._serialize_redemption(redemption)
+
+    def update_redemption_status(self, redemption_id: str, status: str, email_sent_at=None):
+        """Update the status of a redemption"""
+        try:
+            obj_id = ObjectId(redemption_id)
+        except Exception:
+            obj_id = redemption_id
+
+        update_data = {"status": status}
+        if email_sent_at:
+            update_data["email_sent_at"] = email_sent_at
+
+        result = self.redemptions_collection.update_one(
+            {"_id": obj_id},
+            {"$set": update_data}
+        )
+        return result.modified_count > 0
+
+    def mark_redemption_collected(self, redemption_id: str):
+        """Mark a redemption as collected"""
+        try:
+            obj_id = ObjectId(redemption_id)
+        except Exception:
+            obj_id = redemption_id
+
+        result = self.redemptions_collection.update_one(
+            {"_id": obj_id},
+            {"$set": {
+                "status": "collected",
+                "collected_at": datetime.utcnow()
+            }}
+        )
+        return result.modified_count > 0

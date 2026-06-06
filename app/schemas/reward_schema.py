@@ -43,9 +43,32 @@ class RewardRedemptionRequest(BaseModel):
 
 class RewardRedemptionResponse(BaseModel):
     """Reward redemption response"""
+    id: str
     user_id: str
     reward_id: str
     reward_name: str
+    user_email: str
+    user_name: str
     points_deducted: int
+    redemption_code: str
+    pickup_deadline: datetime
     redeemed_at: datetime
+    status: str  # "pending", "confirmed", "collected"
     message: str
+
+
+class RewardRedemptionDetail(BaseModel):
+    """Detailed reward redemption record"""
+    id: str
+    user_id: str
+    user_email: str
+    user_name: str
+    reward_id: str
+    reward_name: str
+    points_deducted: int
+    redemption_code: str
+    pickup_deadline: datetime
+    status: str  # "pending", "confirmed", "collected"
+    email_sent_at: Optional[datetime] = None
+    collected_at: Optional[datetime] = None
+    redeemed_at: datetime
