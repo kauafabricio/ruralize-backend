@@ -32,7 +32,45 @@ def list_events(
 def get_event(event_id: str):
     """Get event details by ID."""
     return event_service.get_event(event_id)
+    
+@router.post("/{event_id}/register")
+def register_event(
+    event_id: str,
+    x_user_id: str = Header(...)
+):
+    """Register current user in event."""
+    current_user = get_current_user(x_user_id)
 
+    return event_service.register_user(
+        event_id,
+        current_user
+    )
+
+
+@router.delete("/{event_id}/register")
+def unregister_event(
+    event_id: str,
+    x_user_id: str = Header(...)
+):
+    """Cancel event registration."""
+    current_user = get_current_user(x_user_id)
+
+    return event_service.unregister_user(
+        event_id,
+        current_user
+    )
+
+
+@router.get("/my/events")
+def get_my_events(
+    x_user_id: str = Header(...)
+):
+    """List events registered by current user."""
+    current_user = get_current_user(x_user_id)
+
+    return event_service.get_my_events(
+        current_user
+    )
 
 @router.post("/", response_model=dict)
 def create_event(event: EventCreate, x_user_id: str = Header(...)):
