@@ -6,7 +6,7 @@ load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
 # SMTP Configuration for Email Service
 SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
