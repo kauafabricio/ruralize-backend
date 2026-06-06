@@ -53,10 +53,7 @@ def list_rewards():
     """Get all available rewards"""
     try:
         rewards = reward_repo.get_all_rewards()
-        return {
-            "success": True,
-            "data": rewards
-        }
+        return rewards
     except Exception as e:
         logger.error(f"Error listing rewards: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
@@ -199,7 +196,7 @@ def get_user_redemptions(x_user_id: str = Header(...)):
         if not result.get("success"):
             raise HTTPException(status_code=400, detail=result)
 
-        return result
+        return result.get("data", [])
 
     except HTTPException:
         raise

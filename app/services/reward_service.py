@@ -164,7 +164,7 @@ class RewardService:
                 "points_deducted": points_required,
                 "redemption_code": redemption_code,
                 "pickup_deadline": pickup_deadline,
-                "status": "confirmed",
+                "status": "pending",
                 "email_sent_at": datetime.utcnow()
             }
 
