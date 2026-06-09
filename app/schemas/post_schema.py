@@ -5,13 +5,15 @@ from datetime import datetime
 class PostCreate(BaseModel):
     content: str
     location: Optional[str] = None
-    sustainable_action: str
+    sustainable_action_id: Optional[str] = None
+    sustainable_action: Optional[str] = None
     event_id: Optional[str] = None
     image_url: Optional[str] = None
 
 class PostUpdate(BaseModel):
     content: Optional[str] = None
     location: Optional[str] = None
+    sustainable_action_id: Optional[str] = None
     sustainable_action: Optional[str] = None
     event_id: Optional[str] = None
     image_url: Optional[str] = None
@@ -42,7 +44,8 @@ class PostResponse(BaseModel):
     user_id: str
     content: str
     location: Optional[str]
-    sustainable_action: str
+    sustainable_action_id: Optional[str]
+    sustainable_action: Optional[str]
     event_id: Optional[str]
     image_url: Optional[str]
     likes: int
@@ -55,7 +58,8 @@ class PostEnrichedResponse(BaseModel):
     user_id: str
     content: str
     location: Optional[str]
-    sustainable_action: str
+    sustainable_action_id: Optional[str]
+    sustainable_action: Optional[str]
     event_id: Optional[str]
     image_url: Optional[str]
     likes: int

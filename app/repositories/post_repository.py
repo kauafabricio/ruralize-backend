@@ -16,14 +16,12 @@ class PostRepository:
             "user_id": post["user_id"],
             "content": post["content"],
             "location": post.get("location"),
+            "sustainable_action_id": post.get("sustainable_action_id"),
             "sustainable_action": post.get("sustainable_action"),
             "event_id": post.get("event_id"),
             "image_url": post.get("image_url"),
-            # `likes` mantém a contagem (int) para consultas rápidas
             "likes": post.get("likes", 0),
-            # `liked_by` armazena lista de ids de usuários que deram like
             "liked_by": post.get("liked_by", []),
-            # `comments` passa a ser uma lista de objetos com `user_id`, `text` e `created_at`
             "comments": post.get("comments", []),
             "created_at": post["created_at"]
         }
@@ -158,3 +156,26 @@ class PostRepository:
                 {"$set": {"comments": comments}}
             )
         return None
+
+    def migrate_posts_to_action_ids(self, action_mapping):
+        """
+        Migra posts antigos que têm sustainable_action como string
+        para usar sustainable_action_id como referência.
+
+        action_mapping: dict com { "string_value": "action_id" }
+        """
+        posts = self.collection.find()
+        migrated_count = 0
+
+        for post in posts:
+            if "sustainable_action_id" not in post or not post["sustainable_action_id"]:
+                action_str = post.get("sustainable_action")
+                if action_str:
+                    action_id = action_mapping.get(action_str, "tree-planting")
+                    self.collection.update_one(
+                        {"_id": post["_id"]},
+                        {"$set": {"sustainable_action_id": action_id}}
+                    )
+                    migrated_count += 1
+
+        return migrated_count

@@ -5,9 +5,10 @@ from app.schemas.post_schema import PostCreate, PostUpdate, CommentCreate
 
 class PostService:
 
-    def __init__(self, post_repo: PostRepository, profile_repo=None):
+    def __init__(self, post_repo: PostRepository, profile_repo=None, action_service=None):
         self.post_repo = post_repo
         self.profile_repo = profile_repo
+        self.action_service = action_service
 
     def _enrich_post(self, post):
         """Enriquece o post com dados de perfil dos comentaristas e curtiadores."""
@@ -62,6 +63,20 @@ class PostService:
     def create_post(self, post_data: PostCreate, user_id: str):
         # cria uma nova postagem incluindo o user_id do autor
         payload = post_data.dict()
+
+        # Resolver sustainable_action_id: priorizar _id sobre string
+        action_id = payload.get("sustainable_action_id")
+        action_str = payload.get("sustainable_action")
+
+        resolved_action_id = None
+        if self.action_service:
+            resolved_action_id = self.action_service.resolve_action_id(action_id, action_str)
+
+        if resolved_action_id:
+            payload["sustainable_action_id"] = resolved_action_id
+        elif action_id:
+            raise HTTPException(status_code=400, detail=f"Ação com ID '{action_id}' não encontrada")
+
         payload["user_id"] = user_id
         post_id = self.post_repo.create_post(payload)
         return {"message": "Post criado com sucesso", "id": post_id}
@@ -71,6 +86,11 @@ class PostService:
         update_payload = {k: v for k, v in post_data.dict().items() if v is not None}
         if not update_payload:
             raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
+
+        # Validar sustainable_action_id se fornecido
+        if "sustainable_action_id" in update_payload and update_payload["sustainable_action_id"]:
+            if self.action_service and not self.action_service.validate_action_exists(update_payload["sustainable_action_id"]):
+                raise HTTPException(status_code=400, detail=f"Ação com ID '{update_payload['sustainable_action_id']}' não encontrada")
 
         result = self.post_repo.update_post(post_id, update_payload)
         if result.matched_count == 0:

@@ -2,8 +2,10 @@ from typing import List
 from fastapi import APIRouter, HTTPException
 from app.schemas.post_schema import PostCreate, PostUpdate, PostResponse, CommentCreate
 from app.services.post_service import PostService
+from app.services.sustainable_action_service import SustainableActionService
 from app.repositories.post_repository import PostRepository
 from app.repositories.profile_repository import ProfileRepository
+from app.repositories.sustainable_action_repository import SustainableActionRepository
 from app.database import db
 
 router = APIRouter()
@@ -11,7 +13,9 @@ router = APIRouter()
 # instância do repositório e serviço de post
 post_repo = PostRepository(db)
 profile_repo = ProfileRepository(db)
-post_service = PostService(post_repo, profile_repo)
+action_repo = SustainableActionRepository(db)
+action_service = SustainableActionService(action_repo)
+post_service = PostService(post_repo, profile_repo, action_service)
 
 # GET
 
