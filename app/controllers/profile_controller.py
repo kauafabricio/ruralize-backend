@@ -1,31 +1,20 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Query
 from app.schemas.profile_schema import ProfileUpdate, ProfileResponse, UserProfileResponse
-from app.schemas.post_schema import PostResponse
 from app.services.profile_service import ProfileService
-from app.services.post_service import PostService
 from app.repositories.profile_repository import ProfileRepository
-from app.repositories.post_repository import PostRepository
 from app.database import db
 
 router = APIRouter()
 
 profile_repo = ProfileRepository(db)
 profile_service = ProfileService(profile_repo)
-post_repo = PostRepository(db)
-post_service = PostService(post_repo, profile_repo)
 
 
 @router.get("/user/{user_id}", response_model=ProfileResponse)
 def get_profile_by_user(user_id: str):
     """Retorna o perfil completo de um usuário."""
     return profile_service.get_profile_by_user_id(user_id)
-
-
-@router.get("/user/{user_id}/posts", response_model=List[PostResponse])
-def get_user_posts(user_id: str):
-    """Retorna todas as postagens de um usuário específico."""
-    return post_service.get_posts_by_user(user_id)
 
 
 @router.put("/user/{user_id}", response_model=dict)
