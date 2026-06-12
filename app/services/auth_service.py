@@ -24,9 +24,6 @@ class AuthService:
             if not user.registration:
                 raise HTTPException(status_code=400, detail="Matrícula é obrigatória para discentes")
 
-            if not user.course:
-                raise HTTPException(status_code=400, detail="Curso é obrigatório para discentes")
-
             existing_student = self.user_repo.find_by_registration(user.registration)
             if existing_student:
                 raise HTTPException(status_code=400, detail="Essa matrícula já foi cadastrada")
@@ -69,3 +66,40 @@ class AuthService:
         })
 
         return {"access_token": token}
+
+    # Verifica campos obrigatórios faltantes no perfil
+    def get_missing_profile_fields(self, user_id: str):
+        from bson import ObjectId
+
+        user = self.user_repo.find_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+        missing_fields = []
+        role = user.get("role", "student")
+
+        # Campos obrigatórios para ambos
+        if not user.get("description"):
+            missing_fields.append("description")
+
+        if not user.get("campus_location"):
+            missing_fields.append("campus_location")
+
+        # Campos específicos por role
+        if role == "teacher":
+            if not user.get("department"):
+                missing_fields.append("department")
+
+        # Campos opcionais (mas recomendados)
+        optional_fields = []
+        if not user.get("profile_photo_url"):
+            optional_fields.append("profile_photo_url")
+        if not user.get("cover_photo_url"):
+            optional_fields.append("cover_photo_url")
+
+        return {
+            "completed": len(missing_fields) == 0,
+            "missing_fields": missing_fields,
+            "required_fields": missing_fields,
+            "optional_fields": optional_fields
+        }

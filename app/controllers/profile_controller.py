@@ -35,8 +35,7 @@ def search_by_name(name: str = Query(..., min_length=2)):
             course=p.get("course"),
             department=p.get("department"),
             profile_photo_url=p.get("profile_photo_url"),
-            description=p.get("description"),
-            tags=p.get("tags", [])
+            description=p.get("description")
         )
         for p in profiles
     ]
@@ -54,8 +53,7 @@ def search_by_course(course: str):
             course=p.get("course"),
             department=p.get("department"),
             profile_photo_url=p.get("profile_photo_url"),
-            description=p.get("description"),
-            tags=p.get("tags", [])
+            description=p.get("description")
         )
         for p in profiles
     ]
@@ -73,8 +71,7 @@ def search_by_department(department: str):
             course=p.get("course"),
             department=p.get("department"),
             profile_photo_url=p.get("profile_photo_url"),
-            description=p.get("description"),
-            tags=p.get("tags", [])
+            description=p.get("description")
         )
         for p in profiles
     ]
@@ -92,27 +89,7 @@ def search_by_role(role: str):
             course=p.get("course"),
             department=p.get("department"),
             profile_photo_url=p.get("profile_photo_url"),
-            description=p.get("description"),
-            tags=p.get("tags", [])
-        )
-        for p in profiles
-    ]
-
-
-@router.get("/search/by-tags", response_model=List[UserProfileResponse])
-def search_by_tags(tags: List[str] = Query(...)):
-    """Busca perfis por tags."""
-    profiles = profile_service.search_profiles_by_tags(tags)
-    return [
-        UserProfileResponse(
-            id=p["id"],
-            name=p["name"],
-            role=p["role"],
-            course=p.get("course"),
-            department=p.get("department"),
-            profile_photo_url=p.get("profile_photo_url"),
-            description=p.get("description"),
-            tags=p.get("tags", [])
+            description=p.get("description")
         )
         for p in profiles
     ]
@@ -130,8 +107,7 @@ def get_all_profiles():
             course=p.get("course"),
             department=p.get("department"),
             profile_photo_url=p.get("profile_photo_url"),
-            description=p.get("description"),
-            tags=p.get("tags", [])
+            description=p.get("description")
         )
         for p in profiles
     ]

@@ -19,3 +19,8 @@ def register(user: UserCreate):
 @router.post("/login")
 def login(user: UserLogin):
     return auth_service.login(user)
+
+# verificar status de conclusão de perfil
+@router.get("/profile-completion-status/{user_id}")
+def get_profile_completion_status(user_id: str):
+    return auth_service.get_missing_profile_fields(user_id)
