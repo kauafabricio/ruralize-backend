@@ -23,10 +23,21 @@ class AuthService:
         if user.role == "student":
             if not user.registration:
                 raise HTTPException(status_code=400, detail="Matrícula é obrigatória para discentes")
+            if not user.course or not user.course.strip():
+                raise HTTPException(status_code=400, detail="Curso é obrigatório para discentes")
 
             existing_student = self.user_repo.find_by_registration(user.registration)
             if existing_student:
                 raise HTTPException(status_code=400, detail="Essa matrícula já foi cadastrada")
+
+        # validação de campos específicos por role
+        if user.role == "teacher":
+            if not user.department or not user.department.strip():
+                raise HTTPException(status_code=400, detail="Departamento é obrigatório para docentes")
+
+        # validação campus_location para ambos
+        if not user.campus_location or not user.campus_location.strip():
+            raise HTTPException(status_code=400, detail="Localização do campus é obrigatória")
 
         # transforma objeto em dicionário
         user_dict = user.dict()
@@ -43,7 +54,10 @@ class AuthService:
         # salva no banco
         result = self.user_repo.create_user(user_dict)
 
-        return {"message": "Usuário criado com sucesso"}
+        return {
+            "message": "Usuário criado com sucesso",
+            "user_id": str(result.inserted_id)
+        }
 
 
     # LOGIN (US002)

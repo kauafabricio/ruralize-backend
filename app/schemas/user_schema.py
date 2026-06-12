@@ -7,6 +7,7 @@ class UserCreate(BaseModel):
     email: EmailStr # e-mail da ufrpe
     password: str
     registration: Optional[str] = None # matrícula (se for estudante)
+    course: Optional[str] = None # curso (se for estudante)
     department: Optional[str] = None # departamento (se for professor)
     role: str  # "student" ou "teacher"
     campus_location: Optional[str] = None # localização do campus
