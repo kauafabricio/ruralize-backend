@@ -1,9 +1,10 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Header
-from app.schemas.subscription_schema import SubscriptionResponse, ParticipantResponse
+from app.schemas.subscription_schema import SubscriptionResponse, ParticipantResponse, SubscriptionUpdate
 from app.services.subscription_service import SubscriptionService
 from app.repositories.subscription_repository import SubscriptionRepository
 from app.repositories.event_repository import EventRepository
+from app.repositories.points_repository import PointsRepository
 from app.core.dependencies import get_current_user
 from app.database import db
 
@@ -11,7 +12,8 @@ router = APIRouter()
 
 subscription_repo = SubscriptionRepository(db)
 event_repo = EventRepository(db)
-subscription_service = SubscriptionService(subscription_repo, event_repo)
+points_repo = PointsRepository(db)
+subscription_service = SubscriptionService(subscription_repo, event_repo, points_repo)
 
 
 @router.post("/{event_id}/subscribe", response_model=dict)
@@ -33,3 +35,19 @@ def get_participants(event_id: str):
     """Get list of participants for an event."""
     participants = subscription_service.get_participants(event_id)
     return {"participants": participants}
+
+@router.patch("/{event_id}/participants/{participant_user_id}/status", response_model=dict)
+def update_participant_status(
+    event_id: str,
+    participant_user_id: str,
+    status_data: SubscriptionUpdate,
+    x_user_id: str = Header(...),
+):
+    """Update attendance status for a participant."""
+    current_user = get_current_user(x_user_id)
+    return subscription_service.update_subscription_status(
+        event_id,
+        current_user,
+        participant_user_id,
+        status_data,
+    )

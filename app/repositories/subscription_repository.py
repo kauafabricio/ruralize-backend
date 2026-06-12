@@ -73,6 +73,12 @@ class SubscriptionRepository:
             {"$set": update_data}
         )
 
+    def update_subscription_by_user_event(self, user_id, event_id, update_data):
+        return self.collection.update_one(
+            {"user_id": user_id, "event_id": event_id},
+            {"$set": update_data}
+        )
+
     def delete_subscription(self, subscription_id):
         try:
             obj_id = ObjectId(subscription_id)

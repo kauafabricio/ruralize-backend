@@ -1,14 +1,21 @@
 from fastapi import HTTPException
 from app.repositories.subscription_repository import SubscriptionRepository
 from app.repositories.event_repository import EventRepository
+from app.repositories.points_repository import PointsRepository
 from app.schemas.subscription_schema import SubscriptionCreate, SubscriptionUpdate
 
 
 class SubscriptionService:
 
-    def __init__(self, subscription_repo: SubscriptionRepository, event_repo: EventRepository = None):
+    def __init__(
+        self,
+        subscription_repo: SubscriptionRepository,
+        event_repo: EventRepository = None,
+        points_repo: PointsRepository = None,
+    ):
         self.subscription_repo = subscription_repo
         self.event_repo = event_repo
+        self.points_repo = points_repo
 
     def get_subscription(self, subscription_id: str):
         subscription = self.subscription_repo.get_subscription_by_id(subscription_id)
@@ -79,9 +86,15 @@ class SubscriptionService:
 
         return {"message": "Inscrição cancelada com sucesso"}
 
-    def update_subscription_status(self, event_id: str, current_user: dict, status_data: SubscriptionUpdate):
+    def update_subscription_status(
+        self,
+        event_id: str,
+        current_user: dict,
+        participant_user_id: str,
+        status_data: SubscriptionUpdate,
+    ):
         """Update subscription status (attended/missed) - only event promoter can do this"""
-        user_id = current_user["id"]
+        promoter_id = current_user["id"]
 
         # Check if user is event promoter
         if self.event_repo:
@@ -89,7 +102,7 @@ class SubscriptionService:
             if not event:
                 raise HTTPException(status_code=404, detail="Evento não encontrado")
 
-            if event["promoter_id"] != user_id:
+            if event["promoter_id"] != promoter_id:
                 raise HTTPException(status_code=403, detail="Você não tem permissão para atualizar inscrições neste evento")
 
         # Validate status
@@ -97,6 +110,39 @@ class SubscriptionService:
         if status_data.status not in valid_statuses:
             raise HTTPException(status_code=400, detail=f"Status deve ser um de: {', '.join(valid_statuses)}")
 
-        # This endpoint would need a way to know which user to update - typically needs user_id in request
-        # For now, this is a template; actual implementation would need user_id parameter
-        raise HTTPException(status_code=400, detail="Implementação incompleta - forneça user_id no request")
+        # Check if subscription exists
+        existing = self.subscription_repo.get_subscription(participant_user_id, event_id)
+        if not existing:
+            raise HTTPException(status_code=404, detail="Inscrição não encontrada")
+
+        # If the status is already set, return a neutral response
+        if existing["status"] == status_data.status:
+            return {
+                "message": "Status da inscrição já está atualizado",
+                "status": existing["status"],
+            }
+
+        result = self.subscription_repo.update_subscription_by_user_event(
+            participant_user_id,
+            event_id,
+            {"status": status_data.status},
+        )
+
+        if result.modified_count == 0:
+            raise HTTPException(status_code=400, detail="Falha ao atualizar o status da inscrição")
+
+        if status_data.status == "attended" and self.points_repo and self.event_repo:
+            event = self.event_repo.get_event_by_id(event_id)
+            if event and event.get("points", 0) > 0:
+                self.points_repo.create_transaction({
+                    "user_id": participant_user_id,
+                    "amount": event["points"],
+                    "transaction_type": "credit",
+                    "description": f"Pontos de presença no evento {event['title']}",
+                    "related_id": event_id,
+                })
+
+        return {
+            "message": "Status da presença atualizado com sucesso",
+            "status": status_data.status,
+        }
