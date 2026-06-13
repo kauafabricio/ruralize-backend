@@ -22,12 +22,17 @@ class PostService:
             profile = self.profile_repo.find_by_user_id(comment["user_id"])
             enriched_comments.append({
                 "user_id": comment["user_id"],
-                "user_name": profile.get("name", "Usuário Desconhecido") if profile else "Usuário Desconhecido",
+                "user_name": (profile.get("name") or "Usuário Desconhecido") if profile else "Usuário Desconhecido",
                 "user_photo": profile.get("profile_photo_url") if profile else None,
                 "content": comment["content"],
                 "created_at": comment["created_at"]
             })
         enriched_post["comments"] = enriched_comments
+
+        # Enriquecer autor com nome e foto
+        author_profile = self.profile_repo.find_by_user_id(post["user_id"])
+        enriched_post["user_name"] = (author_profile.get("name") or "Usuário") if author_profile else "Usuário"
+        enriched_post["user_photo"] = author_profile.get("profile_photo_url") if author_profile else None
 
         # Enriquecer curtidas com nome e foto
         enriched_liked_by = []
@@ -35,7 +40,7 @@ class PostService:
             profile = self.profile_repo.find_by_user_id(user_id)
             enriched_liked_by.append({
                 "user_id": user_id,
-                "user_name": profile.get("name", "Usuário Desconhecido") if profile else "Usuário Desconhecido",
+                "user_name": (profile.get("name") or "Usuário Desconhecido") if profile else "Usuário Desconhecido",
                 "user_photo": profile.get("profile_photo_url") if profile else None
             })
         enriched_post["liked_by"] = enriched_liked_by
@@ -61,14 +66,14 @@ class PostService:
 
     def create_post(self, post_data: PostCreate, user_id: str):
         # cria uma nova postagem incluindo o user_id do autor
-        payload = post_data.dict()
+        payload = {k: v for k, v in post_data.dict().items() if v not in (None, "")}
         payload["user_id"] = user_id
         post_id = self.post_repo.create_post(payload)
         return {"message": "Post criado com sucesso", "id": post_id}
 
     def update_post(self, post_id: str, post_data: PostUpdate):
         # atualiza somente os campos recebidos no payload
-        update_payload = {k: v for k, v in post_data.dict().items() if v is not None}
+        update_payload = {k: v for k, v in post_data.dict().items() if v not in (None, "")}
         if not update_payload:
             raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
 

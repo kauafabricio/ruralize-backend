@@ -16,7 +16,8 @@ class PostRepository:
             "user_id": post["user_id"],
             "content": post["content"],
             "location": post.get("location"),
-            "sustainable_action": post.get("sustainable_action"),
+            "sustainable_action": post.get("sustainable_action") or post.get("sustainable_action_id"),
+            "sustainable_action_id": post.get("sustainable_action_id") or post.get("sustainable_action"),
             "event_id": post.get("event_id"),
             "image_url": post.get("image_url"),
             # `likes` mantém a contagem (int) para consultas rápidas
@@ -38,13 +39,16 @@ class PostRepository:
         return str(result.inserted_id)
 
     def get_all_posts(self):
-        posts = self.collection.find()
+        posts = self.collection.find().sort("created_at", -1)
         return [self._serialize(p) for p in posts]
 
     def get_posts_by_users(self, user_ids):
+        if not user_ids:
+            return []
+
         posts = self.collection.find({
             "user_id": {"$in": user_ids}
-        })
+        }).sort("created_at", -1)
         return [self._serialize(p) for p in posts]
 
     def get_posts_by_user_id(self, user_id):
@@ -116,7 +120,7 @@ class PostRepository:
             "created_at": datetime.utcnow()
         }
 
-        self.collection.update_one(
+        return self.collection.update_one(
             {"_id": obj_id},
             {"$push": {"comments": comment_obj}}
         )

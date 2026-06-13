@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Query
 from app.schemas.profile_schema import ProfileUpdate, ProfileResponse, UserProfileResponse
-from app.schemas.post_schema import PostResponse
+from app.schemas.post_schema import PostEnrichedResponse
 from app.services.profile_service import ProfileService
 from app.services.post_service import PostService
 from app.repositories.profile_repository import ProfileRepository
@@ -22,7 +22,7 @@ def get_profile_by_user(user_id: str):
     return profile_service.get_profile_by_user_id(user_id)
 
 
-@router.get("/user/{user_id}/posts", response_model=List[PostResponse])
+@router.get("/user/{user_id}/posts", response_model=List[PostEnrichedResponse])
 def get_user_posts(user_id: str):
     """Retorna todas as postagens de um usuário específico."""
     return post_service.get_posts_by_user(user_id)
@@ -127,6 +127,31 @@ def search_by_tags(tags: List[str] = Query(...)):
         )
         for p in profiles
     ]
+
+
+@router.post("/user/{user_id}/follow")
+def follow_user(user_id: str, target_id: str = Query(..., alias="target_id")):
+    return profile_service.follow_user(user_id, target_id)
+
+
+@router.delete("/user/{user_id}/follow")
+def unfollow_user(user_id: str, target_id: str = Query(..., alias="target_id")):
+    return profile_service.unfollow_user(user_id, target_id)
+
+
+@router.get("/user/{user_id}/follow-status")
+def get_follow_status(user_id: str, target_id: str = Query(..., alias="target_id")):
+    return profile_service.get_follow_status(user_id, target_id)
+
+
+@router.get("/user/{user_id}/following", response_model=List[UserProfileResponse])
+def get_following_users(user_id: str):
+    return profile_service.get_following(user_id)
+
+
+@router.get("/user/{user_id}/followers", response_model=List[UserProfileResponse])
+def get_followers(user_id: str):
+    return profile_service.get_followers(user_id)
 
 
 @router.get("/", response_model=List[UserProfileResponse])

@@ -3,10 +3,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MONGO_URL = os.getenv("MONGO_URL")
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "ruralize")
+
+def _normalize_mongo_url(url: str) -> str:
+    if url.startswith("mongodb://localhost"):
+        return url.replace("localhost", "127.0.0.1")
+    return url
+
+MONGO_URL = _normalize_mongo_url(
+    os.getenv("MONGO_URL", f"mongodb://127.0.0.1:27017/{MONGO_DB_NAME}")
+)
+SECRET_KEY = os.getenv("SECRET_KEY", "change-me-in-production")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
 # SMTP Configuration for Email Service
 SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")

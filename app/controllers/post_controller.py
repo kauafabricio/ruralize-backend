@@ -1,6 +1,6 @@
 from typing import List
 from fastapi import APIRouter, HTTPException
-from app.schemas.post_schema import PostCreate, PostUpdate, PostResponse, CommentCreate
+from app.schemas.post_schema import PostCreate, PostUpdate, PostResponse, PostEnrichedResponse, CommentCreate
 from app.services.post_service import PostService
 from app.repositories.post_repository import PostRepository
 from app.repositories.profile_repository import ProfileRepository
@@ -15,12 +15,14 @@ post_service = PostService(post_repo, profile_repo)
 
 # GET
 
-@router.get("/", response_model=List[PostResponse])
-def get_posts():
-    """Retorna todas as postagens."""
+@router.get("/", response_model=List[PostEnrichedResponse])
+def get_posts(user_id: str | None = None):
+    """Retorna todas as postagens ou as postagens de um usuário específico."""
+    if user_id:
+        return post_service.get_posts_by_user(user_id)
     return post_service.get_all_posts()
 
-@router.get("/{post_id}", response_model=PostResponse)
+@router.get("/{post_id}", response_model=PostEnrichedResponse)
 def get_post(post_id: str):
     """Retorna uma única postagem por id."""
     return post_service.get_post(post_id)

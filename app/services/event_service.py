@@ -136,50 +136,48 @@ class EventService:
         return {"message": "Evento deletado com sucesso"}
 
     def register_user(self, event_id: str, current_user: dict):
-    event = self.event_repo.get_event_by_id(event_id)
+        event = self.event_repo.get_event_by_id(event_id)
 
-    if not event:
-        raise HTTPException(
-            status_code=404,
-            detail="Evento não encontrado"
+        if not event:
+            raise HTTPException(
+                status_code=404,
+                detail="Evento não encontrado"
+            )
+
+        if event["participant_count"] >= event["max_participants"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Evento lotado"
+            )
+
+        result = self.event_repo.register_user(
+            event_id,
+            current_user["id"]
         )
 
-    if event["participant_count"] >= event["max_participants"]:
-        raise HTTPException(
-            status_code=400,
-            detail="Evento lotado"
+        if result.modified_count == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Usuário já inscrito"
+            )
+
+        return {
+            "message": "Inscrição realizada com sucesso"
+        }
+
+    def unregister_user(self, event_id: str, current_user: dict):
+        self.event_repo.unregister_user(
+            event_id,
+            current_user["id"]
         )
 
-    result = self.event_repo.register_user(
-        event_id,
-        current_user["id"]
-    )
+        return {
+            "message": "Inscrição cancelada com sucesso"
+        }
 
-    if result.modified_count == 0:
-        raise HTTPException(
-            status_code=400,
-            detail="Usuário já inscrito"
+    def get_my_events(self, current_user: dict):
+        events = self.event_repo.get_events_by_participant(
+            current_user["id"]
         )
 
-    return {
-        "message": "Inscrição realizada com sucesso"
-    }
-
-
-def unregister_user(self, event_id: str, current_user: dict):
-    self.event_repo.unregister_user(
-        event_id,
-        current_user["id"]
-    )
-
-    return {
-        "message": "Inscrição cancelada com sucesso"
-    }
-
-
-def get_my_events(self, current_user: dict):
-    events = self.event_repo.get_events_by_participant(
-        current_user["id"]
-    )
-
-    return [self._enrich_event(e) for e in events]
+        return [self._enrich_event(e) for e in events]

@@ -1,20 +1,26 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 
 class PostCreate(BaseModel):
     content: str
     location: Optional[str] = None
-    sustainable_action: str
+    sustainable_action: Optional[str] = Field(None, alias="sustainable_action_id")
     event_id: Optional[str] = None
     image_url: Optional[str] = None
+
+    class Config:
+        allow_population_by_field_name = True
 
 class PostUpdate(BaseModel):
     content: Optional[str] = None
     location: Optional[str] = None
-    sustainable_action: Optional[str] = None
+    sustainable_action: Optional[str] = Field(None, alias="sustainable_action_id")
     event_id: Optional[str] = None
     image_url: Optional[str] = None
+
+    class Config:
+        allow_population_by_field_name = True
 
 class CommentCreate(BaseModel):
     user_id: str
@@ -42,23 +48,16 @@ class PostResponse(BaseModel):
     user_id: str
     content: str
     location: Optional[str]
-    sustainable_action: str
-    event_id: Optional[str]
-    image_url: Optional[str]
-    likes: int
-    liked_by: List[str]
-    comments: List[Comment]
-    created_at: datetime
-
-class PostEnrichedResponse(BaseModel):
-    id: str
-    user_id: str
-    content: str
-    location: Optional[str]
-    sustainable_action: str
+    sustainable_action: Optional[str]
+    sustainable_action_id: Optional[str] = None
     event_id: Optional[str]
     image_url: Optional[str]
     likes: int
     liked_by: List[UserLike]
     comments: List[CommentWithUser]
+    user_name: Optional[str] = None
+    user_photo: Optional[str] = None
     created_at: datetime
+
+class PostEnrichedResponse(PostResponse):
+    pass

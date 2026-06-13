@@ -2,63 +2,71 @@ from fastapi import HTTPException
 
 class FeedService:
 
-    def __init__(self, post_repo, user_repo):
+    def __init__(self, post_repo, user_repo, profile_repo=None):
         self.post_repo = post_repo
         self.user_repo = user_repo
+        self.profile_repo = profile_repo
+
+    def _filter_posts_with_existing_users(self, posts):
+        existing_users = {}
+        filtered_posts = []
+
+        for post in posts:
+            user_id = post.get("user_id")
+            if not user_id:
+                continue
+
+            if user_id not in existing_users:
+                existing_users[user_id] = bool(self.user_repo.find_by_id(user_id))
+
+            if existing_users[user_id]:
+                filtered_posts.append(post)
+
+        return filtered_posts
+
+    def _enrich_post_with_author(self, post):
+        if self.profile_repo:
+            profile = self.profile_repo.find_by_user_id(post.get("user_id"))
+            if profile:
+                post["user_name"] = profile.get("name") or "Usuário"
+                post["user_photo"] = profile.get("profile_photo_url")
+                return post
+
+        user = self.user_repo.find_by_id(post.get("user_id"))
+        if user:
+            post["user_name"] = user.get("name") or "Usuário"
+            post["user_photo"] = user.get("profile_photo_url")
+        else:
+            post["user_name"] = "Usuário"
+            post["user_photo"] = None
+        return post
 
     # buscar postagens de usuários da plataforma
     # aparecerá prioridade para amigos, depois para quem o usuário segue e por último para os demais usuários   
 
     def get_general_feed(self, user_id: str = None):
         posts = self.post_repo.get_all_posts()
-
-        if not user_id:
-            return sorted(
-                posts,
-                key=lambda x: (x["likes"], x["created_at"]),
-                reverse=True
-            )
-
-        user = self.user_repo.find_by_id(user_id)
-        if not user:
-            raise HTTPException(status_code=404, detail="Usuário não encontrado")
-
-        following = set(user.get("following", []))
-        followers = set(user.get("followers", []))
-        friends = following.intersection(followers)
-
-        def feed_priority(post):
-            user_id = post["user_id"]
-            if user_id in friends:
-                return 3
-            if user_id in following:
-                return 2
-            return 1
-
+        posts = self._filter_posts_with_existing_users(posts)
         return sorted(
-            posts,
-            key=lambda x: (feed_priority(x), x["likes"], x["created_at"]),
-            reverse=True
-        )  
+            [self._enrich_post_with_author(p) for p in posts],
+            key=lambda x: x["created_at"],
+            reverse=True,
+        )
     
-    # buscar postagens apenas dos amigos do usuário logado
+    # buscar postagens apenas dos usuários que o usuário logado segue
 
-    def get_friends_feed(self, user_id):
+    def get_following_feed(self, user_id):
         user = self.user_repo.find_by_id(user_id)
 
         if not user:
             raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
-        # buscar 
-        following = set(user.get("following", []))
-        followers = set(user.get("followers", []))
-
-        friends = list(following.intersection(followers))
-
-        posts = self.post_repo.get_posts_by_users(friends)
+        following = list(user.get("following", []))
+        posts = self.post_repo.get_posts_by_users(following)
+        posts = self._filter_posts_with_existing_users(posts)
 
         return sorted(
-            posts,
+            [self._enrich_post_with_author(p) for p in posts],
             key=lambda x: x["created_at"],
             reverse=True
         )

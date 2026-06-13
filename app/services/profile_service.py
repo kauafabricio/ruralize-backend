@@ -28,6 +28,50 @@ class ProfileService:
 
         return {"message": "Perfil atualizado com sucesso"}
 
+    def follow_user(self, user_id: str, target_user_id: str):
+        if user_id == target_user_id:
+            raise HTTPException(status_code=400, detail="Não é possível seguir a si mesmo")
+
+        current_user = self.profile_repo.find_raw_by_user_id(user_id)
+        target_user = self.profile_repo.find_raw_by_user_id(target_user_id)
+
+        if not current_user or not target_user:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+        if str(target_user_id) in [str(item) for item in current_user.get("following", [])]:
+            return {"message": "Você já segue este usuário"}
+
+        self.profile_repo.add_following(user_id, target_user_id)
+        self.profile_repo.add_follower(target_user_id, user_id)
+
+        return {"message": "Usuário seguido com sucesso"}
+
+    def unfollow_user(self, user_id: str, target_user_id: str):
+        if user_id == target_user_id:
+            raise HTTPException(status_code=400, detail="Não é possível deixar de seguir a si mesmo")
+
+        current_user = self.profile_repo.find_raw_by_user_id(user_id)
+        target_user = self.profile_repo.find_raw_by_user_id(target_user_id)
+
+        if not current_user or not target_user:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+        if str(target_user_id) not in [str(item) for item in current_user.get("following", [])]:
+            return {"message": "Você não segue este usuário"}
+
+        self.profile_repo.remove_following(user_id, target_user_id)
+        self.profile_repo.remove_follower(target_user_id, user_id)
+
+        return {"message": "Usuário deixou de ser seguido"}
+
+    def get_follow_status(self, user_id: str, target_user_id: str):
+        current_user = self.profile_repo.find_raw_by_user_id(user_id)
+        if not current_user:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+        is_following = str(target_user_id) in [str(item) for item in current_user.get("following", [])]
+        return {"is_following": is_following}
+
     def search_profiles_by_name(self, name: str):
         if not name or len(name.strip()) < 2:
             raise HTTPException(status_code=400, detail="Nome deve ter pelo menos 2 caracteres")
@@ -48,3 +92,19 @@ class ProfileService:
         if not tags:
             raise HTTPException(status_code=400, detail="Tags obrigatórias")
         return self.profile_repo.find_by_tags(tags)
+
+    def get_following(self, user_id: str):
+        user = self.profile_repo.find_raw_by_user_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+        following_ids = [str(item) for item in user.get("following", [])]
+        return self.profile_repo.get_users_by_ids(following_ids)
+
+    def get_followers(self, user_id: str):
+        user = self.profile_repo.find_raw_by_user_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+        follower_ids = [str(item) for item in user.get("followers", [])]
+        return self.profile_repo.get_users_by_ids(follower_ids)
