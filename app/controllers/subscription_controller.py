@@ -1,9 +1,9 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Header
-from app.schemas.subscription_schema import SubscriptionResponse, ParticipantResponse, SubscriptionUpdate
+from app.repositories.event_repository import EventRepository
+from app.schemas.subscription_schema import SubscriptionResponse, SubscriptionListResponse, SubscriptionUpdate
 from app.services.subscription_service import SubscriptionService
 from app.repositories.subscription_repository import SubscriptionRepository
-from app.repositories.event_repository import EventRepository
 from app.repositories.points_repository import PointsRepository
 from app.core.dependencies import get_current_user
 from app.database import db
@@ -14,6 +14,12 @@ subscription_repo = SubscriptionRepository(db)
 event_repo = EventRepository(db)
 points_repo = PointsRepository(db)
 subscription_service = SubscriptionService(subscription_repo, event_repo, points_repo)
+
+@router.get("/", response_model=List[SubscriptionListResponse])
+def get_subscriptions(x_user_id: str = Header(...)):
+    """List subscriptions from an user."""
+    current_user = get_current_user(x_user_id)
+    return subscription_service.get_subscriptions_by_user(current_user)
 
 
 @router.post("/{event_id}/subscribe", response_model=dict)
