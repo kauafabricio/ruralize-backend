@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.controllers.auth_controller import router as auth_router
@@ -17,7 +18,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-origins = [
+default_origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://ruralize-ufrpe.vercel.app",
@@ -25,6 +26,14 @@ origins = [
     "https://ruralize-git-dev-kauas-projects-24d9238d.vercel.app"
 ]
 
+custom_origins = os.getenv("BACKEND_ALLOWED_ORIGINS")
+if custom_origins:
+    origins = [origin.strip() for origin in custom_origins.split(",") if origin.strip()]
+else:
+    origins = default_origins
+
+# Quando rodando localmente ou em ambientes de preview com frontends dinâmicos,
+# use BACKEND_ALLOWED_ORIGINS para permitir origens adicionais.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
