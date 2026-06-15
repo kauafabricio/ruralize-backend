@@ -125,7 +125,7 @@ class RewardService:
             pickup_deadline = datetime.utcnow() + timedelta(days=7)
 
             transaction_data = {
-                "user_id": user_id,
+                "user_id": str(user_id),
                 "amount": -points_required,
                 "transaction_type": "reward_redemption",
                 "description": f"Resgate de recompensa: {reward.get('name')}",
@@ -149,10 +149,22 @@ class RewardService:
             session = None
             try:
                 session = db.client.start_session()
-                with session.start_transaction():
-                    transaction_id = self.points_repo.create_transaction(transaction_data, session=session)
-                    redemption_id = self.reward_repo.create_redemption(redemption_data, session=session)
-                    self.reward_repo.increment_quantity_redeemed(reward_id, session=session)
+            except Exception as e:
+                logger.warning(
+                    f"MongoDB sessions not available, proceeding without transactions: {e}",
+                )
+                session = None
+
+            try:
+                if session is not None:
+                    with session.start_transaction():
+                        transaction_id = self.points_repo.create_transaction(transaction_data, session=session)
+                        redemption_id = self.reward_repo.create_redemption(redemption_data, session=session)
+                        self.reward_repo.increment_quantity_redeemed(reward_id, session=session)
+                else:
+                    transaction_id = self.points_repo.create_transaction(transaction_data)
+                    redemption_id = self.reward_repo.create_redemption(redemption_data)
+                    self.reward_repo.increment_quantity_redeemed(reward_id)
 
                 logger.info(f"Points transaction created: {transaction_id}")
                 logger.info(f"Redemption recorded: {redemption_id}")
@@ -169,6 +181,9 @@ class RewardService:
                     transaction_id = self.points_repo.create_transaction(transaction_data)
                     redemption_id = self.reward_repo.create_redemption(redemption_data)
                     self.reward_repo.increment_quantity_redeemed(reward_id)
+            finally:
+                if session is not None:
+                    session.end_session()
 
             return {
                 "success": True,

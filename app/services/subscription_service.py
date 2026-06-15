@@ -131,21 +131,33 @@ class SubscriptionService:
         if result.modified_count == 0:
             raise HTTPException(status_code=400, detail="Falha ao atualizar o status da inscrição")
 
+        points_awarded = 0
+        updated_balance = None
+
         if status_data.status == "attended" and self.points_repo and self.event_repo:
             event = self.event_repo.get_event_by_id(event_id)
             if event and event.get("points", 0) > 0:
+                points_awarded = int(event["points"])
                 self.points_repo.create_transaction({
                     "user_id": participant_user_id,
-                    "amount": event["points"],
-                    "transaction_type": "credit",
+                    "amount": points_awarded,
+                    "transaction_type": "event_attendance",
                     "description": f"Pontos de presença no evento {event['title']}",
                     "related_id": event_id,
                 })
+                updated_balance = self.points_repo.get_user_balance(participant_user_id)
 
-        return {
+        response = {
             "message": "Status da presença atualizado com sucesso",
             "status": status_data.status,
         }
+
+        if points_awarded > 0:
+            response["points_awarded"] = points_awarded
+        if updated_balance is not None:
+            response["updated_balance"] = updated_balance
+
+        return response
     
     def get_subscriptions_by_user(self, user_id: str):
         subscriptions = self.subscription_repo.get_subscriptions_by_user(user_id)

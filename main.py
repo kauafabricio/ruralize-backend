@@ -6,6 +6,7 @@ from app.controllers.post_controller import router as post_router
 from app.controllers.profile_controller import router as profile_router
 from app.controllers.action_controller import router as action_router
 from app.controllers.event_controller import router as event_router
+from app.controllers.points_controller import router as points_router
 from app.controllers.subscription_controller import router as subscription_router
 from app.controllers.reward_controller import router as reward_router
 from app.controllers.sustainable_action_controller import router as sustainable_action_router
@@ -37,9 +38,14 @@ app.include_router(feed_router, prefix="/feed", tags=["Feed"])
 app.include_router(post_router, prefix="/posts", tags=["Posts"])
 app.include_router(profile_router, prefix="/profiles", tags=["Profiles"])
 app.include_router(action_router, prefix="/actions", tags=["Actions"])
-app.include_router(sustainable_action_router, prefix="/sustainable-actions", tags=["Sustainable Actions"])
+app.include_router(
+    sustainable_action_router,
+    prefix="/sustainable-actions",
+    tags=["Sustainable Actions"]
+)
 app.include_router(event_router, prefix="/events", tags=["Events"])
-app.include_router(subscription_router, prefix="/event_subscriptions", tags=["Subscriptions"])
+app.include_router(subscription_router, prefix="/events", tags=["Event Subscriptions"])
+app.include_router(points_router, prefix="/points", tags=["Points"])
 app.include_router(reward_router, prefix="/rewards", tags=["Rewards"])
 
 @app.get("/")

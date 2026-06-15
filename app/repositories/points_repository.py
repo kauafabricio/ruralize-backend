@@ -64,23 +64,17 @@ class PointsRepository:
         balance = user.get("points_balance", 0)
 
         # Calculate totals from transactions
-        earned = self.collection.aggregate([
+        earned_result = list(self.collection.aggregate([
             {"$match": {"user_id": user_id, "amount": {"$gt": 0}}},
             {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
-        ])
-        earned_total = list(earned)[0]["total"] if list(self.collection.aggregate([
-            {"$match": {"user_id": user_id, "amount": {"$gt": 0}}},
-            {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
-        ])) else 0
+        ]))
+        earned_total = earned_result[0]["total"] if earned_result else 0
 
-        spent = self.collection.aggregate([
+        spent_result = list(self.collection.aggregate([
             {"$match": {"user_id": user_id, "amount": {"$lt": 0}}},
             {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
-        ])
-        spent_total = abs(list(spent)[0]["total"]) if list(self.collection.aggregate([
-            {"$match": {"user_id": user_id, "amount": {"$lt": 0}}},
-            {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
-        ])) else 0
+        ]))
+        spent_total = abs(spent_result[0]["total"]) if spent_result else 0
 
         return {
             "user_id": user_id,
