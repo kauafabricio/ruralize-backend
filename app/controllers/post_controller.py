@@ -1,6 +1,6 @@
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query, Depends
-from app.schemas.post_schema import PostCreate, PostUpdate, PostResponse, CommentCreate
+from app.schemas.post_schema import PostCreate, PostUpdate, PostResponse, PostEnrichedResponse, CommentCreate
 from app.services.post_service import PostService
 from app.services.sustainable_action_service import SustainableActionService
 from app.repositories.post_repository import PostRepository
@@ -20,14 +20,14 @@ post_service = PostService(post_repo, profile_repo, action_service)
 
 # GET
 
-@router.get("/", response_model=List[PostResponse])
+@router.get("/", response_model=List[PostEnrichedResponse])
 def get_posts(user_id: Optional[str] = Query(None)):
     """Retorna todas as postagens, opcionalmente filtradas por usuário."""
     if user_id:
         return post_service.get_posts_by_user(user_id)
     return post_service.get_all_posts()
 
-@router.get("/{post_id}", response_model=PostResponse)
+@router.get("/{post_id}", response_model=PostEnrichedResponse)
 def get_post(post_id: str):
     """Retorna uma única postagem por id."""
     return post_service.get_post(post_id)

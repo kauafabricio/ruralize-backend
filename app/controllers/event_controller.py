@@ -6,6 +6,7 @@ from app.services.event_service import EventService
 from app.repositories.event_repository import EventRepository
 from app.repositories.action_repository import ActionRepository
 from app.repositories.profile_repository import ProfileRepository
+from app.repositories.subscription_repository import SubscriptionRepository
 from app.core.dependencies import get_current_user
 from app.database import db
 
@@ -14,7 +15,8 @@ router = APIRouter()
 event_repo = EventRepository(db)
 action_repo = ActionRepository(db)
 profile_repo = ProfileRepository(db)
-event_service = EventService(event_repo, action_repo, profile_repo)
+subscription_repo = SubscriptionRepository(db)
+event_service = EventService(event_repo, action_repo, profile_repo, subscription_repo)
 
 
 @router.get("/", response_model=List[EventListResponse])

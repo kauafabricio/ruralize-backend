@@ -26,9 +26,6 @@ class SubscriptionService:
     def get_subscription_for_user_event(self, event_id: str, current_user: dict):
         return self.subscription_repo.get_subscription(current_user["id"], event_id)
 
-    # def get_subscriptions_by_user(self, user_id: str):
-    #     return self.subscription_repo.get_subscriptions_by_user(user_id)
-
     def get_participants(self, event_id: str):
         """Get all participants of an event"""
         participants = self.subscription_repo.get_subscriptions_by_event(event_id)
@@ -63,9 +60,9 @@ class SubscriptionService:
 
         subscription_id = self.subscription_repo.create_subscription(subscription_data)
 
-        # Increment event participant count
+        # Keep event participant list in sync for event-based queries
         if self.event_repo:
-            self.event_repo.increment_participant_count(event_id)
+            self.event_repo.register_user(event_id, user_id)
 
         return {"message": "Inscrição realizada com sucesso", "id": subscription_id}
 
@@ -83,9 +80,9 @@ class SubscriptionService:
         if result.deleted_count == 0:
             raise HTTPException(status_code=404, detail="Inscrição não encontrada")
 
-        # Decrement event participant count
+        # Keep event participant list in sync for event-based queries
         if self.event_repo:
-            self.event_repo.decrement_participant_count(event_id)
+            self.event_repo.unregister_user(event_id, user_id)
 
         return {"message": "Inscrição cancelada com sucesso"}
 
@@ -150,25 +147,30 @@ class SubscriptionService:
             "status": status_data.status,
         }
     
-    def get_subscriptions_by_user(self, user_id: str):
+    def get_subscriptions_by_user(self, current_user: dict):
+        user_id = current_user["id"]
         subscriptions = self.subscription_repo.get_subscriptions_by_user(user_id)
+
+        event_ids = list({sub["event_id"] for sub in subscriptions if sub.get("event_id")})
+        events = self.event_repo.get_events_by_ids(event_ids) if event_ids else []
+        events_map = {event["id"]: event for event in events}
+
         result = []
         for sub in subscriptions:
-        # Busca os detalhes do evento usando o event_id da inscrição
-            event_data = self.event_repo.get_event_by_id(sub["event_id"])
-        
-            if event_data:
-                # Monta a estrutura combinada
-                result.append({
-                    "id": sub["id"],
-                    "status": sub["status"],
-                    "created_at": sub["created_at"],
-                    "event": {
-                        "id": str(event_data["_id"]) if "_id" in event_data else event_data.get("id"),
-                        "title": event_data.get("title"),
-                        "description": event_data.get("description"),
-                        "start_date": event_data.get("start_date"),
-                        "location_name": event_data.get("location_name")
-                    }
-                })
+            event_data = events_map.get(sub["event_id"])
+            if not event_data:
+                continue
+
+            result.append({
+                "id": sub["id"],
+                "status": sub["status"],
+                "created_at": sub["created_at"],
+                "event": {
+                    "id": event_data.get("id"),
+                    "title": event_data.get("title"),
+                    "description": event_data.get("description"),
+                    "start_date": event_data.get("start_date"),
+                    "location_name": event_data.get("location_name"),
+                },
+            })
         return result

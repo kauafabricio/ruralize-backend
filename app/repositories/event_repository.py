@@ -77,6 +77,18 @@ class EventRepository:
         events = self.collection.find({"promoter_id": promoter_id})
         return [self._serialize(e) for e in events]
 
+    def get_events_by_ids(self, event_ids):
+        object_ids = []
+        for event_id in event_ids:
+            try:
+                object_ids.append(ObjectId(event_id))
+            except Exception:
+                object_ids.append(event_id)
+
+        query = {"_id": {"$in": object_ids}} if object_ids else {"_id": {"$in": []}}
+        events = self.collection.find(query)
+        return [self._serialize(e) for e in events]
+
     def update_event(self, event_id, update_data):
         try:
             obj_id = ObjectId(event_id)

@@ -2,15 +2,23 @@ from fastapi import HTTPException
 from app.repositories.event_repository import EventRepository
 from app.repositories.action_repository import ActionRepository
 from app.repositories.profile_repository import ProfileRepository
+from app.repositories.subscription_repository import SubscriptionRepository
 from app.schemas.event_schema import EventCreate, EventUpdate
 
 
 class EventService:
 
-    def __init__(self, event_repo: EventRepository, action_repo: ActionRepository = None, profile_repo: ProfileRepository = None):
+    def __init__(
+        self,
+        event_repo: EventRepository,
+        action_repo: ActionRepository = None,
+        profile_repo: ProfileRepository = None,
+        subscription_repo: SubscriptionRepository = None,
+    ):
         self.event_repo = event_repo
         self.action_repo = action_repo
         self.profile_repo = profile_repo
+        self.subscription_repo = subscription_repo
 
     def _enrich_event(self, event):
         """Enrich event with promoter and action data"""
@@ -161,6 +169,18 @@ class EventService:
                 detail="Usuário já inscrito"
             )
 
+        if self.subscription_repo:
+            existing_subscription = self.subscription_repo.get_subscription(
+                current_user["id"],
+                event_id,
+            )
+            if not existing_subscription:
+                self.subscription_repo.create_subscription({
+                    "user_id": current_user["id"],
+                    "event_id": event_id,
+                    "status": "subscribed",
+                })
+
         return {
             "message": "Inscrição realizada com sucesso"
         }
@@ -170,6 +190,12 @@ class EventService:
             event_id,
             current_user["id"]
         )
+
+        if self.subscription_repo:
+            self.subscription_repo.delete_subscription_by_user_event(
+                current_user["id"],
+                event_id,
+            )
 
         return {
             "message": "Inscrição cancelada com sucesso"

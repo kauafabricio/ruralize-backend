@@ -56,6 +56,8 @@ class PostResponse(BaseModel):
 class PostEnrichedResponse(BaseModel):
     id: str
     user_id: str
+    user_name: Optional[str] = None
+    user_photo: Optional[str] = None
     content: str
     location: Optional[str]
     sustainable_action_id: Optional[str]

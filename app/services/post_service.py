@@ -11,11 +11,20 @@ class PostService:
         self.action_service = action_service
 
     def _enrich_post(self, post):
-        """Enriquece o post com dados de perfil dos comentaristas e curtiadores."""
+        """Enriquece o post com dados de perfil do autor, dos comentaristas e dos curtiadores."""
         if not self.profile_repo:
             return post
 
         enriched_post = post.copy()
+
+        # Enriquecer autor do post com nome e foto
+        author_profile = self.profile_repo.find_by_user_id(post["user_id"])
+        enriched_post["user_name"] = (
+            author_profile.get("name") if author_profile else None
+        )
+        enriched_post["user_photo"] = (
+            author_profile.get("profile_photo_url") if author_profile else None
+        )
 
         # Enriquecer comentários com nome e foto
         enriched_comments = []
@@ -42,6 +51,9 @@ class PostService:
         enriched_post["liked_by"] = enriched_liked_by
 
         return enriched_post
+
+    def enrich_post(self, post):
+        return self._enrich_post(post)
 
     def get_all_posts(self):
         # retorna todas as postagens do banco sem filtro adicional

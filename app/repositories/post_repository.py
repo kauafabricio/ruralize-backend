@@ -114,10 +114,11 @@ class PostRepository:
             "created_at": datetime.utcnow()
         }
 
-        self.collection.update_one(
+        result = self.collection.update_one(
             {"_id": obj_id},
             {"$push": {"comments": comment_obj}}
         )
+        return result
 
     def delete_post(self, post_id: str):
         """Deleta um post pelo ID."""
