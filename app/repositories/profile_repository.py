@@ -62,6 +62,90 @@ class ProfileRepository:
         users = self.users_collection.find({"department": department})
         return [self._serialize(u) for u in users]
 
+    def find_by_user_ids(self, user_ids: list):
+        object_ids = []
+        for user_id in user_ids:
+            try:
+                object_ids.append(ObjectId(user_id))
+            except Exception:
+                object_ids.append(user_id)
+
+        users = self.users_collection.find({"_id": {"$in": object_ids}})
+        return [self._serialize(u) for u in users]
+
+    def find_raw_by_user_id(self, user_id: str):
+        try:
+            obj_id = ObjectId(user_id)
+        except Exception:
+            obj_id = user_id
+
+        return self.users_collection.find_one({"_id": obj_id})
+
+    def add_follow(self, user_id: str, target_id: str):
+        try:
+            obj_id = ObjectId(user_id)
+        except Exception:
+            obj_id = user_id
+
+        return self.users_collection.update_one(
+            {"_id": obj_id},
+            {"$addToSet": {"following": target_id}}
+        )
+
+    def remove_follow(self, user_id: str, target_id: str):
+        try:
+            obj_id = ObjectId(user_id)
+        except Exception:
+            obj_id = user_id
+
+        return self.users_collection.update_one(
+            {"_id": obj_id},
+            {"$pull": {"following": target_id}}
+        )
+
+    def add_follower(self, user_id: str, follower_id: str):
+        try:
+            obj_id = ObjectId(user_id)
+        except Exception:
+            obj_id = user_id
+
+        return self.users_collection.update_one(
+            {"_id": obj_id},
+            {"$addToSet": {"followers": follower_id}}
+        )
+
+    def remove_follower(self, user_id: str, follower_id: str):
+        try:
+            obj_id = ObjectId(user_id)
+        except Exception:
+            obj_id = user_id
+
+        return self.users_collection.update_one(
+            {"_id": obj_id},
+            {"$pull": {"followers": follower_id}}
+        )
+
+    def get_following_ids(self, user_id: str):
+        user = self.find_raw_by_user_id(user_id)
+        if not user:
+            return None
+        return user.get("following", [])
+
+    def get_followers_ids(self, user_id: str):
+        user = self.find_raw_by_user_id(user_id)
+        if not user:
+            return None
+        return user.get("followers", [])
+
+    def is_following(self, user_id: str, target_id: str):
+        try:
+            obj_id = ObjectId(user_id)
+        except Exception:
+            obj_id = user_id
+
+        user = self.users_collection.find_one({"_id": obj_id, "following": target_id})
+        return user is not None
+
     def find_by_role(self, role: str):
         users = self.users_collection.find({"role": role})
         return [self._serialize(u) for u in users]

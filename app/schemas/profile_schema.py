@@ -40,3 +40,7 @@ class UserProfileResponse(BaseModel):
     department: Optional[str] = None
     profile_photo_url: Optional[str] = None
     description: Optional[str] = None
+
+
+class FollowStatusResponse(BaseModel):
+    is_following: bool

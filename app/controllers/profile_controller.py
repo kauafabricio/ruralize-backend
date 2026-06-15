@@ -1,6 +1,11 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Query
-from app.schemas.profile_schema import ProfileUpdate, ProfileResponse, UserProfileResponse
+from app.schemas.profile_schema import (
+    ProfileUpdate,
+    ProfileResponse,
+    UserProfileResponse,
+    FollowStatusResponse,
+)
 from app.services.profile_service import ProfileService
 from app.repositories.profile_repository import ProfileRepository
 from app.database import db
@@ -93,6 +98,60 @@ def search_by_role(role: str):
         )
         for p in profiles
     ]
+
+
+@router.post("/user/{user_id}/follow", response_model=dict)
+def follow_user(user_id: str, target_id: str = Query(..., alias="target_id")):
+    """Seguir outro usuário."""
+    return profile_service.follow_user(user_id, target_id)
+
+
+@router.delete("/user/{user_id}/follow", response_model=dict)
+def unfollow_user(user_id: str, target_id: str = Query(..., alias="target_id")):
+    """Deixar de seguir outro usuário."""
+    return profile_service.unfollow_user(user_id, target_id)
+
+
+@router.get("/user/{user_id}/following", response_model=List[UserProfileResponse])
+def get_following(user_id: str):
+    """Retorna os perfis que o usuário está seguindo."""
+    profiles = profile_service.get_following_profiles(user_id)
+    return [
+        UserProfileResponse(
+            id=p["id"],
+            name=p["name"],
+            role=p["role"],
+            course=p.get("course"),
+            department=p.get("department"),
+            profile_photo_url=p.get("profile_photo_url"),
+            description=p.get("description")
+        )
+        for p in profiles
+    ]
+
+
+@router.get("/user/{user_id}/followers", response_model=List[UserProfileResponse])
+def get_followers(user_id: str):
+    """Retorna os perfis que seguem o usuário."""
+    profiles = profile_service.get_followers_profiles(user_id)
+    return [
+        UserProfileResponse(
+            id=p["id"],
+            name=p["name"],
+            role=p["role"],
+            course=p.get("course"),
+            department=p.get("department"),
+            profile_photo_url=p.get("profile_photo_url"),
+            description=p.get("description")
+        )
+        for p in profiles
+    ]
+
+
+@router.get("/user/{user_id}/follow-status", response_model=FollowStatusResponse)
+def get_follow_status(user_id: str, target_id: str = Query(..., alias="target_id")):
+    """Retorna se o usuário está seguindo outro usuário."""
+    return profile_service.get_follow_status(user_id, target_id)
 
 
 @router.get("/", response_model=List[UserProfileResponse])
