@@ -23,8 +23,8 @@ class SubscriptionService:
             raise HTTPException(status_code=404, detail="Inscrição não encontrada")
         return subscription
 
-    def get_subscriptions_by_user(self, user_id: str):
-        return self.subscription_repo.get_subscriptions_by_user(user_id)
+    # def get_subscriptions_by_user(self, user_id: str):
+    #     return self.subscription_repo.get_subscriptions_by_user(user_id)
 
     def get_participants(self, event_id: str):
         """Get all participants of an event"""
@@ -146,3 +146,26 @@ class SubscriptionService:
             "message": "Status da presença atualizado com sucesso",
             "status": status_data.status,
         }
+    
+    def get_subscriptions_by_user(self, user_id: str):
+        subscriptions = self.collection = self.subscription_repo.get_subscriptions_by_user(user_id)
+        result = []
+        for sub in subscriptions:
+        # Busca os detalhes do evento usando o event_id da inscrição
+            event_data = self.event_repo.get_event_by_id(sub["event_id"])
+        
+            if event_data:
+                # Monta a estrutura combinada
+                result.append({
+                    "id": sub["id"],
+                    "status": sub["status"],
+                    "created_at": sub["created_at"],
+                    "event": {
+                        "id": str(event_data["_id"]) if "_id" in event_data else event_data.get("id"),
+                        "title": event_data.get("title"),
+                        "description": event_data.get("description"),
+                        "start_date": event_data.get("start_date"),
+                        "location_name": event_data.get("location_name")
+                    }
+                })
+        return result
