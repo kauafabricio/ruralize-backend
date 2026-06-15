@@ -7,6 +7,8 @@ class RewardRepository:
     def __init__(self, db):
         self.collection = db["rewards"]
         self.redemptions_collection = db["reward_redemptions"]
+
+    def ensure_indexes(self):
         self.redemptions_collection.create_index("redemption_code", unique=True)
         self.redemptions_collection.create_index([("user_id", 1), ("reward_id", 1)])
 
