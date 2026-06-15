@@ -7,39 +7,60 @@ class RewardRepository:
     def __init__(self, db):
         self.collection = db["rewards"]
         self.redemptions_collection = db["reward_redemptions"]
+        self.redemptions_collection.create_index("redemption_code", unique=True)
+        self.redemptions_collection.create_index([("user_id", 1), ("reward_id", 1)])
 
     def _serialize(self, reward):
         if not reward:
             return None
+
+        created_at = reward.get("created_at")
+        if not created_at:
+            created_at = datetime.utcnow()
+
         return {
-            "id": str(reward["_id"]),
-            "name": reward["name"],
-            "description": reward["description"],
-            "points_required": reward["points_required"],
-            "category": reward["category"],
+            "id": str(reward.get("_id")),
+            "name": reward.get("name", ""),
+            "description": reward.get("description", ""),
+            "points_required": reward.get("points_required", 0),
+            "category": reward.get("category", "other"),
             "image_url": reward.get("image_url"),
             "quantity_available": reward.get("quantity_available"),
             "quantity_redeemed": reward.get("quantity_redeemed", 0),
-            "created_at": reward["created_at"]
+            "created_at": created_at,
         }
 
     def _serialize_redemption(self, redemption):
         if not redemption:
             return None
+
+        status = redemption.get("status", "pending")
+        pickup_deadline = redemption.get("pickup_deadline")
+
+        if status == "pending" and pickup_deadline:
+            if isinstance(pickup_deadline, str):
+                try:
+                    pickup_deadline = datetime.fromisoformat(pickup_deadline.replace("Z", "+00:00"))
+                except Exception:
+                    pickup_deadline = None
+
+            if isinstance(pickup_deadline, datetime) and datetime.utcnow() > pickup_deadline:
+                status = "expired"
+
         return {
             "id": str(redemption["_id"]),
             "user_id": redemption["user_id"],
-            "user_email": redemption["user_email"],
-            "user_name": redemption["user_name"],
+            "user_email": redemption.get("user_email"),
+            "user_name": redemption.get("user_name"),
             "reward_id": redemption["reward_id"],
             "reward_name": redemption["reward_name"],
             "points_deducted": redemption["points_deducted"],
             "redemption_code": redemption["redemption_code"],
             "pickup_deadline": redemption["pickup_deadline"],
-            "status": redemption.get("status", "pending"),
-            "email_sent_at": redemption.get("email_sent_at"),
+            "status": status,
             "collected_at": redemption.get("collected_at"),
-            "redeemed_at": redemption["redeemed_at"]
+            "redeemed_at": redemption["redeemed_at"],
+            "redemption_date": redemption["redeemed_at"]
         }
 
     def create_reward(self, reward_data):
@@ -58,6 +79,21 @@ class RewardRepository:
 
         reward = self.collection.find_one({"_id": obj_id})
         return self._serialize(reward)
+
+    def get_reward_by_name(self, name):
+        """Get a reward by its name"""
+        reward = self.collection.find_one({"name": name})
+        return self._serialize(reward)
+
+    def upsert_reward_by_name(self, reward_data):
+        """Create or update a reward using its name as a natural key"""
+        existing = self.collection.find_one({"name": reward_data.get("name")})
+        if existing:
+            update_data = {k: v for k, v in reward_data.items() if k not in ["_id", "created_at", "quantity_redeemed"]}
+            self.collection.update_one({"_id": existing["_id"]}, {"$set": update_data})
+            return str(existing["_id"])
+
+        return self.create_reward(reward_data)
 
     def get_all_rewards(self):
         """Get all available rewards"""
@@ -82,17 +118,18 @@ class RewardRepository:
         )
         return result.modified_count > 0
 
-    def increment_quantity_redeemed(self, reward_id):
+    def increment_quantity_redeemed(self, reward_id, session=None):
         """Increment quantity redeemed for a reward"""
         try:
             obj_id = ObjectId(reward_id)
         except Exception:
             obj_id = reward_id
 
-        self.collection.update_one(
-            {"_id": obj_id},
-            {"$inc": {"quantity_redeemed": 1}}
-        )
+        update_kwargs = {"$inc": {"quantity_redeemed": 1}}
+        if session is not None:
+            self.collection.update_one({"_id": obj_id}, update_kwargs, session=session)
+        else:
+            self.collection.update_one({"_id": obj_id}, update_kwargs)
 
     def delete_reward(self, reward_id):
         """Delete a reward"""
@@ -103,11 +140,15 @@ class RewardRepository:
 
         return self.collection.delete_one({"_id": obj_id})
 
-    def create_redemption(self, redemption_data):
+    def create_redemption(self, redemption_data, session=None):
         """Record a reward redemption"""
         redemption_data["redeemed_at"] = datetime.utcnow()
 
-        result = self.redemptions_collection.insert_one(redemption_data)
+        if session is not None:
+            result = self.redemptions_collection.insert_one(redemption_data, session=session)
+        else:
+            result = self.redemptions_collection.insert_one(redemption_data)
+
         return str(result.inserted_id)
 
     def get_redemptions_by_user(self, user_id):
@@ -138,7 +179,7 @@ class RewardRepository:
         })
         return self._serialize_redemption(redemption)
 
-    def update_redemption_status(self, redemption_id: str, status: str, email_sent_at=None):
+    def update_redemption_status(self, redemption_id: str, status: str):
         """Update the status of a redemption"""
         try:
             obj_id = ObjectId(redemption_id)
@@ -146,8 +187,6 @@ class RewardRepository:
             obj_id = redemption_id
 
         update_data = {"status": status}
-        if email_sent_at:
-            update_data["email_sent_at"] = email_sent_at
 
         result = self.redemptions_collection.update_one(
             {"_id": obj_id},

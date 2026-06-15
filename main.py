@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.controllers.auth_controller import router as auth_router
@@ -16,18 +17,19 @@ app = FastAPI(
     version="1.0.0"
 )
 
-origins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://ruralize-ufrpe.vercel.app",
-    "https://ruralize-bnamd1cew-kauas-projects-24d9238d.vercel.app",
-    "https://ruralize-git-dev-kauas-projects-24d9238d.vercel.app"
-]
+allowed_origins = os.getenv(
+    "BACKEND_ALLOWED_ORIGINS",
+    "http://localhost:3000,http://127.0.0.1:3000,https://ruralize-ufrpe.vercel.app,https://ruralize-bnamd1cew-kauas-projects-24d9238d.vercel.app,https://ruralize-git-dev-kauas-projects-24d9238d.vercel.app",
+)
+
+cors_origins = [origin.strip() for origin in allowed_origins.split(",") if origin.strip()]
+if cors_origins == ["*"]:
+    cors_origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
+    allow_origins=cors_origins,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -41,6 +43,14 @@ app.include_router(sustainable_action_router, prefix="/sustainable-actions", tag
 app.include_router(event_router, prefix="/events", tags=["Events"])
 app.include_router(subscription_router, prefix="/events", tags=["Subscriptions"])
 app.include_router(reward_router, prefix="/rewards", tags=["Rewards"])
+
+
+@app.on_event("startup")
+def startup_event():
+    from app.core.initial_data import ensure_default_rewards
+
+    ensure_default_rewards()
+
 
 @app.get("/")
 def home():

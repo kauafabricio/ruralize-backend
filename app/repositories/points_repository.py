@@ -19,17 +19,23 @@ class PointsRepository:
             "created_at": transaction["created_at"]
         }
 
-    def create_transaction(self, transaction_data):
+    def create_transaction(self, transaction_data, session=None):
         """Create a points transaction and update user balance"""
         transaction_data["created_at"] = datetime.utcnow()
 
-        result = self.collection.insert_one(transaction_data)
-
-        # Update user's points balance
-        self.users_collection.update_one(
-            {"_id": ObjectId(transaction_data["user_id"])},
-            {"$inc": {"points_balance": transaction_data["amount"]}}
-        )
+        if session is not None:
+            result = self.collection.insert_one(transaction_data, session=session)
+            self.users_collection.update_one(
+                {"_id": ObjectId(transaction_data["user_id"])},
+                {"$inc": {"points_balance": transaction_data["amount"]}},
+                session=session
+            )
+        else:
+            result = self.collection.insert_one(transaction_data)
+            self.users_collection.update_one(
+                {"_id": ObjectId(transaction_data["user_id"])},
+                {"$inc": {"points_balance": transaction_data["amount"]}}
+            )
 
         return str(result.inserted_id)
 

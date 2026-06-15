@@ -69,6 +69,5 @@ class RewardRedemptionDetail(BaseModel):
     redemption_code: str
     pickup_deadline: datetime
     status: str  # "pending", "confirmed", "collected"
-    email_sent_at: Optional[datetime] = None
     collected_at: Optional[datetime] = None
     redeemed_at: datetime

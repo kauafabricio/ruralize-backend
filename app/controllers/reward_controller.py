@@ -4,16 +4,14 @@ from app.schemas.reward_schema import (
     RewardCreate,
     RewardUpdate,
     RewardResponse,
+    RewardRedemptionDetail,
     RewardRedemptionRequest,
-    RewardRedemptionResponse
 )
 from app.services.reward_service import RewardService
 from app.repositories.reward_repository import RewardRepository
 from app.repositories.points_repository import PointsRepository
 from app.repositories.user_repository import UserRepository
-from app.services.email_service import EmailService
 from app.core.dependencies import get_current_user
-from app.core.config import SMTP_HOST, SMTP_PORT, SMTP_EMAIL, SMTP_PASSWORD, SMTP_USE_TLS
 from app.database import db
 
 router = APIRouter()
@@ -23,14 +21,7 @@ logger = logging.getLogger(__name__)
 reward_repo = RewardRepository(db)
 points_repo = PointsRepository(db)
 user_repo = UserRepository(db)
-email_service = EmailService(
-    smtp_host=SMTP_HOST,
-    smtp_port=SMTP_PORT,
-    sender_email=SMTP_EMAIL,
-    sender_password=SMTP_PASSWORD,
-    use_tls=SMTP_USE_TLS
-)
-reward_service = RewardService(reward_repo, points_repo, user_repo, email_service)
+reward_service = RewardService(reward_repo, points_repo, user_repo)
 
 
 @router.post("/admin/create", response_model=dict)
@@ -48,7 +39,7 @@ def create_reward(reward_data: RewardCreate):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/list", response_model=dict)
+@router.get("/", response_model=list[RewardResponse])
 def list_rewards():
     """Get all available rewards"""
     try:
@@ -57,6 +48,12 @@ def list_rewards():
     except Exception as e:
         logger.error(f"Error listing rewards: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/list", response_model=list[RewardResponse])
+def list_rewards_alias():
+    """Alias for compatibility with /rewards/list"""
+    return list_rewards()
 
 
 @router.get("/category/{category}", response_model=dict)
@@ -161,8 +158,6 @@ def redeem_reward(request: RewardRedemptionRequest, x_user_id: str = Header(...)
                 status_code = 404
             elif result.get("error_code") == "INSUFFICIENT_POINTS":
                 status_code = 402  # Payment Required
-            elif result.get("error_code") == "NO_EMAIL_REGISTERED":
-                status_code = 400
 
             raise HTTPException(status_code=status_code, detail=result)
 
@@ -182,7 +177,7 @@ def redeem_reward(request: RewardRedemptionRequest, x_user_id: str = Header(...)
         )
 
 
-@router.get("/user/redemptions", response_model=dict)
+@router.get("/user/redemptions", response_model=list[RewardRedemptionDetail])
 def get_user_redemptions(x_user_id: str = Header(...)):
     """
     Get all redemptions for the authenticated user
