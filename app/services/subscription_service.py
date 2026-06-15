@@ -23,6 +23,9 @@ class SubscriptionService:
             raise HTTPException(status_code=404, detail="Inscrição não encontrada")
         return subscription
 
+    def get_subscription_for_user_event(self, event_id: str, current_user: dict):
+        return self.subscription_repo.get_subscription(current_user["id"], event_id)
+
     # def get_subscriptions_by_user(self, user_id: str):
     #     return self.subscription_repo.get_subscriptions_by_user(user_id)
 

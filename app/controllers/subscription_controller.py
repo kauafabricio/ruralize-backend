@@ -1,7 +1,13 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Header
 from app.repositories.event_repository import EventRepository
-from app.schemas.subscription_schema import SubscriptionResponse, SubscriptionListResponse, SubscriptionUpdate, UserSubscriptionResponse
+from app.schemas.subscription_schema import (
+    SubscriptionResponse,
+    SubscriptionListResponse,
+    SubscriptionUpdate,
+    UserSubscriptionResponse,
+    ParticipantResponse,
+)
 from app.services.subscription_service import SubscriptionService
 from app.repositories.subscription_repository import SubscriptionRepository
 from app.repositories.points_repository import PointsRepository
@@ -15,11 +21,21 @@ event_repo = EventRepository(db)
 points_repo = PointsRepository(db)
 subscription_service = SubscriptionService(subscription_repo, event_repo, points_repo)
 
-@router.get("/", response_model=List[UserSubscriptionResponse])
+@router.get("/subscriptions", response_model=List[UserSubscriptionResponse])
 def get_subscriptions(x_user_id: str = Header(...)):
     """List subscriptions from an user."""
     current_user = get_current_user(x_user_id)
     return subscription_service.get_subscriptions_by_user(current_user)
+
+@router.get("/{event_id}/participants/me", response_model=Optional[ParticipantResponse])
+def get_my_participation(event_id: str, x_user_id: str = Header(...)):
+    """Get current user's subscription status for a specific event."""
+    current_user = get_current_user(x_user_id)
+    subscription = subscription_service.get_subscription_for_user_event(event_id, current_user)
+    return {
+        "user_id": subscription["user_id"],
+        "status": subscription["status"],
+    } if subscription else None
 
 
 @router.post("/{event_id}/subscribe", response_model=dict)
