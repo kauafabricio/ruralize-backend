@@ -43,8 +43,8 @@ app.include_router(
     prefix="/sustainable-actions",
     tags=["Sustainable Actions"]
 )
-app.include_router(event_router, prefix="/events", tags=["Events"])
 app.include_router(subscription_router, prefix="/events", tags=["Subscriptions"])
+app.include_router(event_router, prefix="/events", tags=["Events"])
 app.include_router(points_router, prefix="/points", tags=["Points"])
 app.include_router(reward_router, prefix="/rewards", tags=["Rewards"])
 
