@@ -148,7 +148,7 @@ class SubscriptionService:
         }
     
     def get_subscriptions_by_user(self, user_id: str):
-        subscriptions = self.collection = self.subscription_repo.get_subscriptions_by_user(user_id)
+        subscriptions = self.subscription_repo.get_subscriptions_by_user(user_id)
         result = []
         for sub in subscriptions:
         # Busca os detalhes do evento usando o event_id da inscrição
