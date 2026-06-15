@@ -18,8 +18,8 @@ app = FastAPI(
 )
 
 origins = [
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
     "https://ruralize-ufrpe.vercel.app",
     "https://ruralize-bnamd1cew-kauas-projects-24d9238d.vercel.app",
     "https://ruralize-git-dev-kauas-projects-24d9238d.vercel.app"
@@ -44,7 +44,7 @@ app.include_router(
     tags=["Sustainable Actions"]
 )
 app.include_router(event_router, prefix="/events", tags=["Events"])
-app.include_router(subscription_router, prefix="/events", tags=["Event Subscriptions"])
+app.include_router(subscription_router, prefix="/event_subscriptions", tags=["Subscriptions"])
 app.include_router(points_router, prefix="/points", tags=["Points"])
 app.include_router(reward_router, prefix="/rewards", tags=["Rewards"])
 
